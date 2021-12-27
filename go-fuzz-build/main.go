@@ -602,7 +602,8 @@ func (c *Context) copyFuzzDep() {
 	// which can be duplicated safely.
 	// So we eliminate the import statement and copy go-fuzz-defs/defs.go
 	// directly into the go-fuzz-dep package.
-	newDir := filepath.Join(c.workdir, "goroot", "src", "go-fuzz-dep")
+	// See https://github.com/dvyukov/go-fuzz/issues/320
+	newDir := filepath.Join(c.workdir, "gopath", "src", "go-fuzz-dep")
 	c.mkdirAll(newDir)
 	dep := c.packageNamed("github.com/dvyukov/go-fuzz/go-fuzz-dep")
 	for _, f := range dep.GoFiles {
