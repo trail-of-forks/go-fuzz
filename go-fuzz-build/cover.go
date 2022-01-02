@@ -33,6 +33,26 @@ func instrument(pkg, fullName string, fset *token.FileSet, parsedFile *ast.File,
 	}
 	if sonar == nil {
 		file.addImport("go-fuzz-dep", fuzzdepPkg, "CoverTab")
+		for _, element := range info.Types {
+			_, named := element.Type.(*types.Named)
+			if named {
+				importPackage := element.Type.(*types.Named).Obj().Pkg()
+				if importPackage != nil {
+					importPath := importPackage.Path()
+					foundImport := false
+					for _, imp := range file.astFile.Imports {
+						impPath := imp.Path.Value
+						impPath = imp.Path.Value[1 : len(impPath)-1]
+						if impPath == importPath {
+							foundImport = true
+						}
+					}
+					if !foundImport && pkg != importPath {
+						file.addImport(importPath, "", "CoverTab")
+					}
+				}
+			}
+		}
 		ast.Walk(file, file.astFile)
 	} else {
 		s := &Sonar{
