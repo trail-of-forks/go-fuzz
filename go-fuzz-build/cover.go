@@ -47,8 +47,12 @@ func instrument(pkg, fullName string, fset *token.FileSet, parsedFile *ast.File,
 							foundImport = true
 						}
 					}
-					if !foundImport && pkg != importPath {
-						file.addImport(importPath, "", "CoverTab")
+					if !foundImport && pkg != importPath && !strings.Contains(importPath, "internal/") {
+						if strings.Contains(importPath, "/") {
+							importSlice := strings.Split(importPath, "/")[1]
+							importPath = string(importSlice[len(importSlice)-1])
+						}
+						file.addImport(importPath, importPath, "CoverTab") // TODO replace CoverTab with real field of package
 					}
 				}
 			}
