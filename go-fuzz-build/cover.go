@@ -48,11 +48,7 @@ func instrument(pkg, fullName string, fset *token.FileSet, parsedFile *ast.File,
 						}
 					}
 					if !foundImport && pkg != importPath && !strings.Contains(importPath, "internal/") {
-						if strings.Contains(importPath, "/") {
-							importSlice := strings.Split(importPath, "/")[1]
-							importPath = string(importSlice[len(importSlice)-1])
-						}
-						file.addImport(importPath, importPath, "CoverTab") // TODO replace CoverTab with real field of package
+						file.addImport(importPath, "", "")
 					}
 				}
 			}
@@ -694,23 +690,25 @@ func (f *File) addImport(path, name, anyIdent string) {
 	// Now refer to the package, just in case it ends up unused.
 	// That is, append to the end of the file the declaration
 	//	var _ = _cover_atomic_.AddUint32
-	reference := &ast.GenDecl{
-		Tok: token.VAR,
-		Specs: []ast.Spec{
-			&ast.ValueSpec{
-				Names: []*ast.Ident{
-					ast.NewIdent("_"),
-				},
-				Values: []ast.Expr{
-					&ast.SelectorExpr{
-						X:   ast.NewIdent(name),
-						Sel: ast.NewIdent(anyIdent),
+	if len(name) > 0 && len(anyIdent) > 0 {
+		reference := &ast.GenDecl{
+			Tok: token.VAR,
+			Specs: []ast.Spec{
+				&ast.ValueSpec{
+					Names: []*ast.Ident{
+						ast.NewIdent("_"),
+					},
+					Values: []ast.Expr{
+						&ast.SelectorExpr{
+							X:   ast.NewIdent(name),
+							Sel: ast.NewIdent(anyIdent),
+						},
 					},
 				},
 			},
-		},
+		}
+		astFile.Decls = append(astFile.Decls, reference)
 	}
-	astFile.Decls = append(astFile.Decls, reference)
 }
 
 func (f *File) addCounters(pos, blockEnd token.Pos, list []ast.Stmt, extendToClosingBrace bool) []ast.Stmt {
