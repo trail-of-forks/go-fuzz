@@ -514,6 +514,12 @@ func (c *Context) buildInstrumentedBinary(blocks *[]CoverBlock, sonar *[]CoverBl
 	c.instrumentPackages(blocks, sonar)
 	mainPkg := c.createFuzzMain()
 	outf := c.tempFile()
+	cmdCleanImports := exec.Command("goimports", "-w", c.workdir)
+
+	if out, err := cmdCleanImports.CombinedOutput(); err != nil {
+		c.failf("failed to execute goimports: %v\n%v", err, string(out))
+	}
+
 	args := []string{"build", "-tags", makeTags()}
 	if *flagBuildX {
 		args = append(args, "-x")
