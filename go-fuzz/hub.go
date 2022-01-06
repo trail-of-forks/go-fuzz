@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/rpc"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -76,6 +77,90 @@ type Stats struct {
 	restarts uint64
 }
 
+func parseDict(tokenLine *[]byte, tokenLineNo int) *[]byte {
+	var err error
+	metaDataMode := true
+	token := make([]byte, 0, len(*tokenLine))
+	tokenLevel := 0
+	for index := 0; index < len(*tokenLine); index++ {
+		switch (*tokenLine)[index] {
+		case byte('"'):
+			if !metaDataMode {
+				metaDataMode = !metaDataMode
+			} else if index == 0 || (*tokenLine)[index-1] == byte('=') {
+				metaDataMode = !metaDataMode
+			}
+			break
+		case byte('\\'):
+			if !metaDataMode {
+
+				index++
+				if index >= len(*tokenLine) {
+					log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+				}
+				switch (*tokenLine)[index] {
+				case byte('"'), byte('\\'):
+					token = append(token, (*tokenLine)[index])
+					break
+
+				case byte('x'):
+					if index+2 >= len(*tokenLine) {
+						log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+					}
+
+					hexBytes := make([]byte, 1)
+					_, errDecode := hex.Decode(hexBytes, (*tokenLine)[index+1:index+3])
+					if errDecode != nil {
+						log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+					}
+
+					token = append(token, hexBytes[0])
+
+					index = index + 2
+					break
+
+				case byte('n'):
+					token = append(token, byte('\n'))
+					break
+
+				case byte('t'):
+					token = append(token, byte('\t'))
+					break
+				}
+			}
+			break
+		case byte('@'):
+			//Handle token level if metaDataMode
+			if metaDataMode && index+1 < len(*tokenLine) {
+				num := ""
+				for counter := 1; index+counter < len(*tokenLine); counter++ {
+					value := int((*tokenLine)[index+counter])
+					if 0x30 <= value && value <= 0x39 {
+						num = num + string(rune(value))
+					} else {
+						break
+					}
+				}
+				tokenLevel, err = strconv.Atoi(num)
+				if err != nil {
+					log.Fatalf("token level in dictionary line %d could not be parsed", tokenLineNo)
+				}
+			}
+			// Fallthrough if not metaDataMode to add the @ to the token
+		default:
+			if !metaDataMode {
+				token = append(token, (*tokenLine)[index])
+			}
+		}
+
+	}
+
+	if tokenLevel <= dictLevel {
+		return &token
+	}
+	return nil
+}
+
 func newHub(metadata MetaData) *Hub {
 	procs := *flagProcs
 	hub := &Hub{
@@ -132,62 +217,9 @@ func newHub(metadata MetaData) *Hub {
 			if bytes.HasPrefix(tokenLine, []byte("#")) || len(tokenLine) == 0 {
 				continue
 			}
-			metaDataMode := true
-			token := make([]byte, 0, len(tokenLine))
-			//TODO tokenLevel := 0
-			index := 0
-			for range tokenLine {
-				switch tokenLine[index] {
-				case byte('"'):
-					metaDataMode = !metaDataMode
-					break
-				case byte('\\'):
-					if !metaDataMode {
-
-						index++
-						if index >= len(tokenLine) {
-							log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
-						}
-						switch tokenLine[index] {
-						case byte('"'), byte('\\'):
-							token = append(token, tokenLine[index])
-							break
-
-						case byte('x'):
-							if index+2 >= len(tokenLine) {
-								log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
-							}
-
-							hexBytes := make([]byte, 1)
-							_, errDecode := hex.Decode(hexBytes, tokenLine[index+1:index+3])
-							if errDecode != nil {
-								log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
-							}
-
-							token = append(token, hexBytes[0])
-
-							index = index + 2
-							break
-
-						case byte('n'):
-							token = append(token, byte('\n'))
-							break
-
-						case byte('t'):
-							token = append(token, byte('\t'))
-							break
-						}
-					}
-					break
-				case byte('@'):
-					//Handle level
-					// TODO
-				default:
-					if !metaDataMode {
-						token = append(token, tokenLine[index])
-					}
-				}
-				index++
+			token := parseDict(&tokenLine, tokenLineNo)
+			if token != nil {
+				ro.strLits = append(ro.strLits, *token)
 			}
 
 		}
