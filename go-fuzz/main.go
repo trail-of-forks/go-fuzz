@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
+	"strconv"
+	"strings"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -42,10 +44,14 @@ var (
 	flagSonar             = flag.Bool("sonar", true, "use sonar hints")
 	flagV                 = flag.Int("v", 0, "verbosity level")
 	flagHTTP              = flag.String("http", "", "HTTP server listen address (coordinator mode only)")
+	flagDict              = flag.String("dict", "", "optional fuzzer dictionary")
 
 	shutdown        uint32
 	shutdownC       = make(chan struct{})
 	shutdownCleanup []func()
+
+	dictPath  = ""
+	dictLevel = 0
 )
 
 func main() {
@@ -55,6 +61,30 @@ func main() {
 	}
 	if *flagHTTP != "" && *flagWorker != "" {
 		log.Fatalf("both -http and -worker are specified")
+	}
+
+	if *flagDict != "" {
+		_, err := os.Stat(*flagDict)
+		if err != nil {
+			atIndex := strings.LastIndex(*flagDict, "@")
+			if atIndex != -1 {
+				dictPath = (*flagDict)[:atIndex]
+				_, errStat := os.Stat(dictPath)
+				if errStat != nil {
+					log.Fatalf("cannot read dictionary file %q: %v", dictPath, err)
+				}
+				dictLevel, err = strconv.Atoi((*flagDict)[atIndex+1:])
+				if err != nil {
+					log.Printf("could not convert dict level using dict level 0 instead")
+					dictLevel = 0
+				}
+			} else {
+				log.Fatalf("cannot read dictionary file %q: %v", *flagDict, err)
+			}
+		} else {
+			dictPath = *flagDict
+		}
+		log.Printf("%d", dictLevel) // TODO remove
 	}
 
 	go func() {
@@ -100,8 +130,8 @@ func main() {
 			// Try the default. Best effort only.
 			var bin string
 			cfg := new(packages.Config)
-			// Note that we do not set GO111MODULE here in order to respect any GO111MODULE 
-			// setting by the user as we are finding dependencies. See modules support 
+			// Note that we do not set GO111MODULE here in order to respect any GO111MODULE
+			// setting by the user as we are finding dependencies. See modules support
 			// comments in go-fuzz-build/main.go for more details.
 			cfg.Env = os.Environ()
 			pkgs, err := packages.Load(cfg, ".")

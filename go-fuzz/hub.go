@@ -4,7 +4,10 @@
 package main
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/rpc"
 	"path/filepath"
@@ -116,6 +119,81 @@ func newHub(metadata MetaData) *Hub {
 			ro.intLits = append(ro.intLits, []byte(lit.Val))
 		}
 	}
+
+	if dictPath != "" {
+		ro.strLits = nil // Discard existing tokens
+		dictionary, err := ioutil.ReadFile(dictPath)
+		if err != nil {
+			log.Fatalf("could not read tokens from %q: %v", dictPath, err)
+		}
+
+		for tokenLineNo, tokenLine := range bytes.Split(dictionary, []byte("\n")) {
+			// Ignore Comments
+			if bytes.HasPrefix(tokenLine, []byte("#")) || len(tokenLine) == 0 {
+				continue
+			}
+			metaDataMode := true
+			token := make([]byte, 0, len(tokenLine))
+			//TODO tokenLevel := 0
+			index := 0
+			for range tokenLine {
+				switch tokenLine[index] {
+				case byte('"'):
+					metaDataMode = !metaDataMode
+					break
+				case byte('\\'):
+					if !metaDataMode {
+
+						index++
+						if index >= len(tokenLine) {
+							log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+						}
+						switch tokenLine[index] {
+						case byte('"'), byte('\\'):
+							token = append(token, tokenLine[index])
+							break
+
+						case byte('x'):
+							if index+2 >= len(tokenLine) {
+								log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+							}
+
+							hexBytes := make([]byte, 1)
+							_, errDecode := hex.Decode(hexBytes, tokenLine[index+1:index+3])
+							if errDecode != nil {
+								log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+							}
+
+							token = append(token, hexBytes[0])
+
+							index = index + 2
+							break
+
+						case byte('n'):
+							token = append(token, byte('\n'))
+							break
+
+						case byte('t'):
+							token = append(token, byte('\t'))
+							break
+						}
+					}
+					break
+				case byte('@'):
+					//Handle level
+					// TODO
+				default:
+					if !metaDataMode {
+						token = append(token, tokenLine[index])
+					}
+				}
+				index++
+			}
+
+		}
+
+	}
+
 	hub.ro.Store(ro)
 
 	go hub.loop()
