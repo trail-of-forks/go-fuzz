@@ -77,7 +77,7 @@ type Stats struct {
 	restarts uint64
 }
 
-func parseDict(tokenLine *[]byte, tokenLineNo int) *[]byte {
+func parseDictTokenLine(tokenLine *[]byte, tokenLineNo int) *[]byte {
 	var err error
 	metaDataMode := true
 	token := make([]byte, 0, len(*tokenLine))
@@ -86,32 +86,39 @@ func parseDict(tokenLine *[]byte, tokenLineNo int) *[]byte {
 		switch (*tokenLine)[index] {
 		case byte('"'):
 			if !metaDataMode {
+				// If we are parsing the token (metaDataMode=false) the first " we encounter marks the end of the token
 				metaDataMode = !metaDataMode
 			} else if index == 0 || (*tokenLine)[index-1] == byte('=') {
+				// change the metaDataMode either directly or if a keyword is defined after an equal sign
 				metaDataMode = !metaDataMode
 			}
 			break
 		case byte('\\'):
+			// Handle escape sequence
 			if !metaDataMode {
-
 				index++
 				if index >= len(*tokenLine) {
-					log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+					log.Printf("dictionary token in line %d has incorrect format", tokenLineNo)
+					return nil
 				}
 				switch (*tokenLine)[index] {
 				case byte('"'), byte('\\'):
+					// Handle escaped quote (\") and escaped backslash (\\)
 					token = append(token, (*tokenLine)[index])
 					break
 
 				case byte('x'):
+					// Handle hexadecimal values (e.g. \xFF)
 					if index+2 >= len(*tokenLine) {
-						log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+						log.Printf("dictionary token in line %d has incorrect format", tokenLineNo)
+						return nil
 					}
 
 					hexBytes := make([]byte, 1)
 					_, errDecode := hex.Decode(hexBytes, (*tokenLine)[index+1:index+3])
 					if errDecode != nil {
-						log.Fatalf("dictionary token in line %d has no correct format", tokenLineNo)
+						log.Printf("dictionary token in line %d has incorrect format", tokenLineNo)
+						return nil
 					}
 
 					token = append(token, hexBytes[0])
@@ -120,10 +127,12 @@ func parseDict(tokenLine *[]byte, tokenLineNo int) *[]byte {
 					break
 
 				case byte('n'):
+					// Handle newline (\n)
 					token = append(token, byte('\n'))
 					break
 
 				case byte('t'):
+					// Handle tab (\t)
 					token = append(token, byte('\t'))
 					break
 				}
@@ -143,7 +152,8 @@ func parseDict(tokenLine *[]byte, tokenLineNo int) *[]byte {
 				}
 				tokenLevel, err = strconv.Atoi(num)
 				if err != nil {
-					log.Fatalf("token level in dictionary line %d could not be parsed", tokenLineNo)
+					log.Printf("token level in dictionary line %d could not be parsed", tokenLineNo)
+					return nil
 				}
 			}
 			// Fallthrough if not metaDataMode to add the @ to the token
@@ -155,6 +165,7 @@ func parseDict(tokenLine *[]byte, tokenLineNo int) *[]byte {
 
 	}
 
+	// If the global dictLevel is equal or higher than the tokenLevel is added, otherwise it is ignored
 	if tokenLevel <= dictLevel {
 		return &token
 	}
@@ -217,8 +228,9 @@ func newHub(metadata MetaData) *Hub {
 			if bytes.HasPrefix(tokenLine, []byte("#")) || len(tokenLine) == 0 {
 				continue
 			}
-			token := parseDict(&tokenLine, tokenLineNo)
+			token := parseDictTokenLine(&tokenLine, tokenLineNo)
 			if token != nil {
+				// add token to ro.strLits
 				ro.strLits = append(ro.strLits, *token)
 			}
 

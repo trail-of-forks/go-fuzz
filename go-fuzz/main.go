@@ -64,8 +64,10 @@ func main() {
 	}
 
 	if *flagDict != "" {
+		// Check if the provided path exists
 		_, err := os.Stat(*flagDict)
 		if err != nil {
+			// If not it might be because a dictLevel was provided by appending @<num> to the dict path
 			atIndex := strings.LastIndex(*flagDict, "@")
 			if atIndex != -1 {
 				dictPath = (*flagDict)[:atIndex]
@@ -79,12 +81,12 @@ func main() {
 					dictLevel = 0
 				}
 			} else {
+				// If no dictLevel is provided and the dictionary does not exist log error and exit
 				log.Fatalf("cannot read dictionary file %q: %v", *flagDict, err)
 			}
 		} else {
 			dictPath = *flagDict
 		}
-		log.Printf("%d", dictLevel) // TODO remove
 	}
 
 	go func() {
