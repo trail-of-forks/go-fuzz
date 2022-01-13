@@ -20,6 +20,14 @@ func newMutator() *Mutator {
 	return &Mutator{r: pcg.New()}
 }
 
+func (m *Mutator) shuffle(a []byte) []byte {
+	for i := len(a) - 1; i > 0; i-- {
+		j := m.r.Intn(i + 1)
+		a[i], a[j] = a[j], a[i]
+	}
+	return a
+}
+
 func (m *Mutator) rand(n int) int {
 	return m.r.Intn(n)
 }
@@ -53,7 +61,7 @@ func (m *Mutator) mutate(data []byte, ro *ROData) []byte {
 	copy(res, data)
 	nm := 1 + m.r.Exp2()
 	for iter := 0; iter < nm; iter++ {
-		switch m.rand(20) {
+		switch m.rand(22) {
 		case 0:
 			// Remove a range of bytes.
 			if len(res) <= 1 {
@@ -386,6 +394,39 @@ func (m *Mutator) mutate(data []byte, ro *ROData) []byte {
 			}
 			pos := m.rand(len(res) - len(lit))
 			copy(res[pos:], lit)
+		case 20:
+			// Insert repeated bytes.
+			minBytesToInsert := 3
+			if minBytesToInsert+len(res) > MaxInputSize {
+				iter--
+				continue
+			}
+			maxBytesToInsert := MaxInputSize - len(res)
+			pos := m.rand(len(res) + 1)
+			n := m.rand(maxBytesToInsert-minBytesToInsert+1) + minBytesToInsert
+			for i := 0; i < n; i++ {
+				res = append(res, 0)
+			}
+			copy(res[pos+n:], res[pos:])
+			randomByte := byte(m.rand(256))
+			for i := 0; i < n; i++ {
+				res[pos+i] = randomByte
+			}
+		case 21:
+			// Shuffle Bytes
+			if len(res) > MaxInputSize || len(res) == 0 {
+				iter--
+				continue
+			}
+
+			shuffleAmount := m.rand(min(len(res)-1, 8)) + 1
+			shuffleStart := m.rand(len(res) - shuffleAmount)
+
+			shuffle := m.shuffle(res[shuffleStart : shuffleStart+shuffleAmount])
+
+			for i := 0; i < shuffleAmount; i++ {
+				res[shuffleStart+i] = shuffle[i]
+			}
 		}
 	}
 	if len(res) > MaxInputSize {
