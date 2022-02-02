@@ -15,6 +15,8 @@ import (
 	"io"
 	"strconv"
 	"strings"
+    . "github.com/trailofbits/go-fuzz/internal/go-fuzz-types"
+    . "github.com/trailofbits/go-fuzz/go-fuzz-defs"
 )
 
 const fuzzdepPkg = "_go_fuzz_dep_"
