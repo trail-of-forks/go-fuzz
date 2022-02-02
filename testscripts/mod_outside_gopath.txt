@@ -17,7 +17,7 @@ cp go.mod_PRISTINE go.mod
 env GO111MODULE=auto
 
 # Because cmd/go now defaults to -mod=readonly, we need to explicitly add go-fuzz-dep.
-go get github.com/dvyukov/go-fuzz/go-fuzz-dep
+go get github.com/trailofbits/go-fuzz/go-fuzz-dep
 
 # Sanity check the module seems well formed.
 exec go list -m all
@@ -41,7 +41,7 @@ stderr 'workers: \d+, corpus: '
 # Clean up.
 cp go.mod_PRISTINE go.mod
 rm foo-fuzz.zip
-go get github.com/dvyukov/go-fuzz/go-fuzz-dep
+go get github.com/trailofbits/go-fuzz/go-fuzz-dep
 
 # Second, we test with GO111MODULE=on, which will likely be the default in Go 1.14.
 env GO111MODULE=on
@@ -62,7 +62,7 @@ stderr 'workers: \d+, corpus: '
 # Clean up.
 cp go.mod_PRISTINE go.mod
 rm foo-fuzz.zip
-go get github.com/dvyukov/go-fuzz/go-fuzz-dep
+go get github.com/trailofbits/go-fuzz/go-fuzz-dep
 
 # Third, we test with GO111MODULE unset.
 # The meaning of this will likely change in Go 1.14, but given we are 
@@ -85,7 +85,7 @@ stderr 'workers: \d+, corpus: '
 # Clean up.
 cp go.mod_PRISTINE go.mod
 rm foo-fuzz.zip
-go get github.com/dvyukov/go-fuzz/go-fuzz-dep
+go get github.com/trailofbits/go-fuzz/go-fuzz-dep
 
 # Fourth, we test with GO111MODULE=off.
 # The meaning of this is unlikely to change in Go 1.14,
@@ -104,7 +104,7 @@ env GO111MODULE=off
 # Clean up (mainly in case we later add another test below).
 cp go.mod_PRISTINE go.mod
 rm foo-fuzz.zip
-go get github.com/dvyukov/go-fuzz/go-fuzz-dep
+go get github.com/trailofbits/go-fuzz/go-fuzz-dep
 
 # Define two modules.
 # example.com/foo has a fuzz function, and depends on example.com/bar.

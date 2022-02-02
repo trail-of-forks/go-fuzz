@@ -277,7 +277,7 @@ Versified (all valid xml):
 
 * Usage
 
-- go get github.com/dvyukov/go-fuzz/...
+- go get github.com/trailofbits/go-fuzz/...
 - write test:
 
 	func Fuzz(data []byte) int {
@@ -287,7 +287,7 @@ Versified (all valid xml):
 
 - build
 
-	$ go-fuzz-build github.com/dvyukov/go-fuzz/examples/gob
+	$ go-fuzz-build github.com/trailofbits/go-fuzz/examples/gob
 
 - collect corpus
 - run

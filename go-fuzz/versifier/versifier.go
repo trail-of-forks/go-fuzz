@@ -32,7 +32,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/dvyukov/go-fuzz/go-fuzz/internal/pcg"
+	"github.com/trailofbits/go-fuzz/go-fuzz/internal/pcg"
 )
 
 func BuildVerse(oldv *Verse, data []byte) *Verse {

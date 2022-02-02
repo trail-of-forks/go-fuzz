@@ -11,8 +11,8 @@
 #    > exec go-fuzz-build -func=FuzzDependOnVendor
 #    [stderr]
 #    could not load packages: go [list -e -json -compiled=true -test=false -export=false -deps=true -find=false -tags gofuzz -- . 
-#      github.com/dvyukov/go-fuzz/go-fuzz-dep]: exit status 1: build github.com/dvyukov/go-fuzz/go-fuzz-dep: 
-#      cannot load github.com/dvyukov/go-fuzz/go-fuzz-dep: 
+#      github.com/trailofbits/go-fuzz/go-fuzz-dep]: exit status 1: build github.com/trailofbits/go-fuzz/go-fuzz-dep: 
+#      cannot load github.com/trailofbits/go-fuzz/go-fuzz-dep: 
 #      open $WORK\foo\vendor\github.com\dvyukov\go-fuzz\go-fuzz-dep: The system cannot find the path specified.
 
 # TODO: this test currently relies on latest go-fuzz/go-fuzz-dep and go-fuzz-defs
@@ -31,7 +31,7 @@
 cd foo 
 
 # Because cmd/go now defaults to -mod=readonly and requires a valid go.sum entry, we need to explicitly add go-fuzz-dep.
-go get github.com/dvyukov/go-fuzz/go-fuzz-dep
+go get github.com/trailofbits/go-fuzz/go-fuzz-dep
 
 # Sanity check the module seems well formed.
 exec go list -m all

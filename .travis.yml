@@ -41,7 +41,7 @@ before_install:
   - go get -u github.com/rogpeppe/go-internal/cmd/testscript
 
 # Set the import path (including to help with forks).
-go_import_path: github.com/dvyukov/go-fuzz
+go_import_path: github.com/trailofbits/go-fuzz
 
 script:
   # Sanity check 'timeout(1)'.
@@ -51,7 +51,7 @@ script:
 
   # Sanity check that the 'testscript' cmd seems to function at all.
   # If all the testscripts fail, this is a good one to troubleshoot first.
-  - cd $GOPATH/src/github.com/dvyukov/go-fuzz
+  - cd $GOPATH/src/github.com/trailofbits/go-fuzz
   - testscript -v testscripts/fuzz_help.txt
 
   # Run our tests for fuzzing modules.
@@ -65,13 +65,13 @@ script:
   - testscript -v testscripts/mod_vendor.txt
 
   # Prepare to test the png example from dvyukov/go-fuzz-corpus.
-  - git clone --depth=1 https://github.com/dvyukov/go-fuzz-corpus $GOPATH/src/github.com/dvyukov/go-fuzz-corpus
-  - cd $GOPATH/src/github.com/dvyukov/go-fuzz-corpus/
+  - git clone --depth=1 https://github.com/trailofbits/go-fuzz-corpus $GOPATH/src/github.com/trailofbits/go-fuzz-corpus
+  - cd $GOPATH/src/github.com/trailofbits/go-fuzz-corpus/
   - cd png
   # Create a small module to test the png example.
-  - go mod init github.com/dvyukov/go-fuzz-corpus/png
+  - go mod init github.com/trailofbits/go-fuzz-corpus/png
   - go mod tidy
-  - go get -d github.com/dvyukov/go-fuzz/go-fuzz-dep
+  - go get -d github.com/trailofbits/go-fuzz/go-fuzz-dep
   - ls -l
 
   # Reduce chances of future surprises due to any caching.
@@ -86,7 +86,7 @@ script:
 
   # Instrument using go-fuzz-build on the png example Fuzz function.
   - which go-fuzz-build
-  - go-fuzz-build -o=./fuzz.zip github.com/dvyukov/go-fuzz-corpus/png
+  - go-fuzz-build -o=./fuzz.zip github.com/trailofbits/go-fuzz-corpus/png
 
   # Run go-fuzz on the result of instrumenting the png example Fuzz function.
   # Stop after 20 sec of fuzzing.
@@ -100,7 +100,7 @@ script:
   - "(if [[ $(find ./freshworkdir/corpus/ -type f | wc -l) -gt 1 ]]; then exit 0; fi; exit 1)"
 
   # Instrument the test package from dvyukov/go-fuzz/test.
-  - cd $GOPATH/src/github.com/dvyukov/go-fuzz
+  - cd $GOPATH/src/github.com/trailofbits/go-fuzz
   - cd test
   - ls -l
   - rm -rf test-fuzz.zip

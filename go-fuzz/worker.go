@@ -18,8 +18,8 @@ import (
 	"time"
 	"unsafe"
 
-	. "github.com/dvyukov/go-fuzz/go-fuzz-defs"
-	. "github.com/dvyukov/go-fuzz/internal/go-fuzz-types"
+	. "github.com/trailofbits/go-fuzz/go-fuzz-defs"
+	. "github.com/trailofbits/go-fuzz/internal/go-fuzz-types"
 )
 
 type execType byte

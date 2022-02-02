@@ -5,7 +5,7 @@ Fuzzing is mainly applicable to packages that parse complex inputs (both text
 and binary), and is especially useful for hardening of systems that parse inputs
 from potentially malicious users (e.g. anything accepted over a network).
 
-**Note:** go-fuzz has recently added preliminary support for fuzzing [Go Modules](https://github.com/golang/go/wiki/Modules).  See the [section below](https://github.com/dvyukov/go-fuzz/blob/master/README.md#modules-support) for more details. 
+**Note:** go-fuzz has recently added preliminary support for fuzzing [Go Modules](https://github.com/golang/go/wiki/Modules).  See the [section below](https://github.com/trailofbits/go-fuzz/blob/master/README.md#modules-support) for more details. 
 If you encounter a problem with modules, please file an issue with details. A workaround might be to disable modules via `export GO111MODULE=off`.
 
 ## Usage
@@ -87,19 +87,19 @@ Put the initial corpus into the workdir/corpus directory (in our case
 Consider committing the generated inputs to your source control system, this
 will allow you to restart go-fuzz without losing previous work.
 
-The [go-fuzz-corpus repository](https://github.com/dvyukov/go-fuzz-corpus) contains 
+The [go-fuzz-corpus repository](https://github.com/trailofbits/go-fuzz-corpus) contains 
 a bunch of examples of test functions and initial input corpuses for various packages.
 
 The next step is to get go-fuzz:
 
 ```
-$ go get -u github.com/dvyukov/go-fuzz/go-fuzz@latest github.com/dvyukov/go-fuzz/go-fuzz-build@latest golang.org/x/tools/cmd/goimports@latest
+$ go get -u github.com/trailofbits/go-fuzz/go-fuzz@latest github.com/trailofbits/go-fuzz/go-fuzz-build@latest golang.org/x/tools/cmd/goimports@latest
 ```
 
 Then, download the corpus and build the test program with necessary instrumentation:
 ```
-$ go get -d github.com/dvyukov/go-fuzz-corpus
-$ cd $GOPATH/src/github.com/dvyukov/go-fuzz-corpus
+$ go get -d github.com/trailofbits/go-fuzz-corpus
+$ cd $GOPATH/src/github.com/trailofbits/go-fuzz-corpus
 $ cd png
 $ go-fuzz-build
 ```
@@ -141,7 +141,7 @@ information is also served via http (see the ```-http``` flag).
 go-fuzz has preliminary support for fuzzing [Go Modules](https://github.com/golang/go/wiki/Modules). 
 go-fuzz respects the standard `GO111MODULE` environment variable, which can be set to `on`, `off`, or `auto`. 
 
-go-fuzz-build will add a `require` for `github.com/dvyukov/go-fuzz` to your go.mod. If desired, you may remove this once the build is complete.
+go-fuzz-build will add a `require` for `github.com/trailofbits/go-fuzz` to your go.mod. If desired, you may remove this once the build is complete.
 
 Vendoring with modules is not yet supported. A `vendor` directory will be ignored, and go-fuzz will report an error if `GOFLAGS=-mod=vendor` is set.
 
@@ -164,7 +164,7 @@ instead of go-fuzz (requires linux).
 Sample usage:
 
 ```
-$ cd $GOPATH/src/github.com/dvyukov/go-fuzz-corpus/fmt
+$ cd $GOPATH/src/github.com/trailofbits/go-fuzz-corpus/fmt
 $ go-fuzz-build -libfuzzer  # produces fmt.a
 $ clang -fsanitize=fuzzer fmt.a -o fmt.libfuzzer
 $ ./fmt.libfuzzer
@@ -215,11 +215,11 @@ $ go-fuzz -bin=./png-fuzz.zip -worker=127.0.0.1:8745 -procs=10
 
 go-fuzz repository history was recently rewritten to exclude examples directory
 to reduce total repository size and download time (see
-[#88](https://github.com/dvyukov/go-fuzz/issues/88),
-[#114](https://github.com/dvyukov/go-fuzz/issues/114) and
-https://github.com/dvyukov/go-fuzz-corpus). Unfortunately, that means that
+[#88](https://github.com/trailofbits/go-fuzz/issues/88),
+[#114](https://github.com/trailofbits/go-fuzz/issues/114) and
+https://github.com/trailofbits/go-fuzz-corpus). Unfortunately, that means that
 `go get -u` command will fail if you had a previous version installed.
-Please remove $GOPATH/github.com/dvyukov/go-fuzz before running `go get` again.
+Please remove $GOPATH/github.com/trailofbits/go-fuzz before running `go get` again.
 
 ## Credits and technical details
 

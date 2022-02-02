@@ -147,8 +147,8 @@ Coverage-guided fuzzer needs O(4 * 2^8) = O(2^10) tries.
 
 2. Build:
 
-  go get github.com/dvyukov/go-fuzz/...
-  go-fuzz-build github.com/dvyukov/go-fuzz-corpus/gob
+  go get github.com/trailofbits/go-fuzz/...
+  go-fuzz-build github.com/trailofbits/go-fuzz-corpus/gob
 
 3. Run:
 

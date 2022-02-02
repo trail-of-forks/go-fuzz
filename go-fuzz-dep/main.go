@@ -13,7 +13,7 @@ import (
 	"time"
 	"unsafe"
 
-	. "github.com/dvyukov/go-fuzz/go-fuzz-defs"
+	. "github.com/trailofbits/go-fuzz/go-fuzz-defs"
 )
 
 func Main(fns []func([]byte) int) {
