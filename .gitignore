@@ -1,3 +1,6 @@
 *~
 *-fuzz$
-.idea/*
+.idea
+.DS_Store
+go-fuzz-build/go-fuzz-build
+go-fuzz/go-fuzz
