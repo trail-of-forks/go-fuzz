@@ -9,10 +9,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	go_fuzz_types "github.com/trailofbits/go-fuzz/go-fuzz-types"
 	"go/ast"
 	"go/parser"
 	"go/token"
 	"go/types"
+	"golang.org/x/tools/go/packages"
 	"io"
 	"io/ioutil"
 	"os"
@@ -24,8 +26,6 @@ import (
 	"text/template"
 	"unicode"
 	"unicode/utf8"
-
-	"golang.org/x/tools/go/packages"
 )
 
 var (
@@ -147,7 +147,7 @@ func main() {
 	// We'd need to implement that support ourselves. (It's do-able but non-trivial.)
 	// See also https://golang.org/issue/29824.
 	lits := c.gatherLiterals()
-	var blocks, sonar []CoverBlock
+	var blocks, sonar []go_fuzz_types.CoverBlock
 
 	if *flagLibFuzzer {
 		archive := c.buildInstrumentedBinary(&blocks, nil)
@@ -494,8 +494,8 @@ func (c *Context) populateWorkdir() {
 	c.copyFuzzDep()
 }
 
-func (c *Context) createMeta(lits map[Literal]struct{}, blocks []CoverBlock, sonar []CoverBlock) string {
-	meta := MetaData{Blocks: blocks, Sonar: sonar, Funcs: c.allFuncs, DefaultFunc: *flagFunc}
+func (c *Context) createMeta(lits map[go_fuzz_types.Literal]struct{}, blocks []go_fuzz_types.CoverBlock, sonar []go_fuzz_types.CoverBlock) string {
+	meta := go_fuzz_types.MetaData{Blocks: blocks, Sonar: sonar, Funcs: c.allFuncs, DefaultFunc: *flagFunc}
 	for k := range lits {
 		meta.Literals = append(meta.Literals, k)
 	}
@@ -508,7 +508,7 @@ func (c *Context) createMeta(lits map[Literal]struct{}, blocks []CoverBlock, son
 	return f
 }
 
-func (c *Context) buildInstrumentedBinary(blocks *[]CoverBlock, sonar *[]CoverBlock) string {
+func (c *Context) buildInstrumentedBinary(blocks *[]go_fuzz_types.CoverBlock, sonar *[]go_fuzz_types.CoverBlock) string {
 	c.instrumentPackages(blocks, sonar)
 	mainPkg := c.createFuzzMain()
 	outf := c.tempFile()
@@ -578,14 +578,14 @@ func (c *Context) calcIgnore() {
 	}
 }
 
-func (c *Context) gatherLiterals() map[Literal]struct{} {
+func (c *Context) gatherLiterals() map[go_fuzz_types.Literal]struct{} {
 	nolits := map[string]bool{
 		"math":    true,
 		"os":      true,
 		"unicode": true,
 	}
 
-	lits := make(map[Literal]struct{})
+	lits := make(map[go_fuzz_types.Literal]struct{})
 	visit := func(pkg *packages.Package) {
 		if c.ignore[pkg.PkgPath] || nolits[pkg.PkgPath] {
 			return
@@ -703,7 +703,7 @@ func (c *Context) packagesNamed(paths ...string) (pkgs []*packages.Package) {
 	return pkgs
 }
 
-func (c *Context) instrumentPackages(blocks *[]CoverBlock, sonar *[]CoverBlock) {
+func (c *Context) instrumentPackages(blocks *[]go_fuzz_types.CoverBlock, sonar *[]go_fuzz_types.CoverBlock) {
 	visit := func(pkg *packages.Package) {
 		if c.ignore[pkg.PkgPath] {
 			return

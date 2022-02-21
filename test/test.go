@@ -8,13 +8,13 @@ import (
 	"runtime"
 
 	// Test vendoring support.
-	vendored_foo "non.existent.com/foo"
+	//vendored_foo "non.existent.com/foo"
 
 	"github.com/trailofbits/go-fuzz/test/testdep"
 )
 
 func init() {
-	vendored_foo.Foo()
+	//vendored_foo.Foo()
 	// Test that background goroutines don't break sonar.
 	// https://github.com/trailofbits/go-fuzz/issues/145
 	// Sonar code is racy (see the issue), but the test don't crash
