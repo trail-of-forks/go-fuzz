@@ -7,6 +7,8 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
+	base "github.com/trailofbits/go-fuzz/go-fuzz-defs"
+	"github.com/trailofbits/go-fuzz/go-fuzz-types"
 	"go/ast"
 	"go/constant"
 	"go/printer"
@@ -15,13 +17,11 @@ import (
 	"io"
 	"strconv"
 	"strings"
-    . "github.com/trailofbits/go-fuzz/internal/go-fuzz-types"
-    . "github.com/trailofbits/go-fuzz/go-fuzz-defs"
 )
 
 const fuzzdepPkg = "_go_fuzz_dep_"
 
-func instrument(pkg, fullName string, fset *token.FileSet, parsedFile *ast.File, info *types.Info, out io.Writer, blocks *[]CoverBlock, sonar *[]CoverBlock) {
+func instrument(pkg, fullName string, fset *token.FileSet, parsedFile *ast.File, info *types.Info, out io.Writer, blocks *[]gofuzztypes.CoverBlock, sonar *[]gofuzztypes.CoverBlock) {
 	file := &File{
 		fset:     fset,
 		pkg:      pkg,
@@ -80,7 +80,7 @@ type Sonar struct {
 	fset     *token.FileSet
 	fullName string
 	pkg      string
-	blocks   *[]CoverBlock
+	blocks   *[]gofuzztypes.CoverBlock
 	info     *types.Info
 }
 
@@ -222,22 +222,22 @@ func (s *Sonar) Visit(n ast.Node) ast.Visitor {
 	var flags uint8
 	switch nn.Op {
 	case token.EQL:
-		flags = SonarEQL
+		flags = base.SonarEQL
 		break
 	case token.NEQ:
-		flags = SonarNEQ
+		flags = base.SonarNEQ
 		break
 	case token.LSS:
-		flags = SonarLSS
+		flags = base.SonarLSS
 		break
 	case token.GTR:
-		flags = SonarGTR
+		flags = base.SonarGTR
 		break
 	case token.LEQ:
-		flags = SonarLEQ
+		flags = base.SonarLEQ
 		break
 	case token.GEQ:
-		flags = SonarGEQ
+		flags = base.SonarGEQ
 		break
 	default:
 		return s // recurse
@@ -262,7 +262,7 @@ func (s *Sonar) Visit(n ast.Node) ast.Visitor {
 		//	if len(name) > 5 { ... }
 		// If we would have the name value at runtime, we will know
 		// what part of the input to alter to affect len result.
-		flags |= SonarLength
+		flags |= base.SonarLength
 	}
 
 	checkType := func(tv types.TypeAndValue) bool {
@@ -288,22 +288,22 @@ func (s *Sonar) Visit(n ast.Node) ast.Visitor {
 	}
 	var tv types.TypeAndValue
 	if isConstExpr(s.info, v1) {
-		flags |= SonarConst1
+		flags |= base.SonarConst1
 	} else {
 		tv = s.info.Types[v1]
 	}
 	if isConstExpr(s.info, v2) {
-		flags |= SonarConst2
+		flags |= base.SonarConst2
 	} else {
 		tv = s.info.Types[v2]
 	}
-	if flags&SonarConst1 != 0 && flags&SonarConst2 != 0 {
+	if flags&base.SonarConst1 != 0 && flags&base.SonarConst2 != 0 {
 		return nil
 	}
 	id := int(flags) | sonarSeq<<8
 	startPos := s.fset.Position(nn.Pos())
 	endPos := s.fset.Position(nn.End())
-	*s.blocks = append(*s.blocks, CoverBlock{sonarSeq, s.fullName, startPos.Line, startPos.Column, endPos.Line, endPos.Column, int(flags)})
+	*s.blocks = append(*s.blocks, gofuzztypes.CoverBlock{sonarSeq, s.fullName, startPos.Line, startPos.Column, endPos.Line, endPos.Column, int(flags)})
 	sonarSeq++
 	block := &ast.BlockStmt{}
 
@@ -416,7 +416,7 @@ func isLen(n ast.Expr) bool {
 
 type LiteralCollector struct {
 	ctxt *Context
-	lits map[Literal]struct{}
+	lits map[gofuzztypes.Literal]struct{}
 }
 
 func (lc *LiteralCollector) Visit(n ast.Node) (w ast.Visitor) {
@@ -443,9 +443,9 @@ func (lc *LiteralCollector) Visit(n ast.Node) (w ast.Visitor) {
 		lit := nn.Value
 		switch nn.Kind {
 		case token.STRING:
-			lc.lits[Literal{lc.unquote(lit), true}] = struct{}{}
+			lc.lits[gofuzztypes.Literal{lc.unquote(lit), true}] = struct{}{}
 		case token.CHAR:
-			lc.lits[Literal{lc.unquote(lit), false}] = struct{}{}
+			lc.lits[gofuzztypes.Literal{lc.unquote(lit), false}] = struct{}{}
 		case token.INT:
 			if lit[0] < '0' || lit[0] > '9' {
 				lc.ctxt.failf("unsupported literal '%v'", lit)
@@ -468,7 +468,7 @@ func (lc *LiteralCollector) Visit(n ast.Node) (w ast.Visitor) {
 			} else {
 				val = append(val, byte(v), byte(v>>8), byte(v>>16), byte(v>>24), byte(v>>32), byte(v>>40), byte(v>>48), byte(v>>56))
 			}
-			lc.lits[Literal{string(val), false}] = struct{}{}
+			lc.lits[gofuzztypes.Literal{string(val), false}] = struct{}{}
 		}
 		return nil
 	}
@@ -518,7 +518,7 @@ type File struct {
 	pkg      string
 	fullName string
 	astFile  *ast.File
-	blocks   *[]CoverBlock
+	blocks   *[]gofuzztypes.CoverBlock
 	info     *types.Info
 }
 
@@ -875,7 +875,7 @@ func (f *File) newCounter(start, end token.Pos, numStmt int) ast.Stmt {
 	if f.blocks != nil {
 		s := f.fset.Position(start)
 		e := f.fset.Position(end)
-		*f.blocks = append(*f.blocks, CoverBlock{cnt, f.fullName, s.Line, s.Column, e.Line, e.Column, numStmt})
+		*f.blocks = append(*f.blocks, gofuzztypes.CoverBlock{cnt, f.fullName, s.Line, s.Column, e.Line, e.Column, numStmt})
 	}
 
 	idx := &ast.BasicLit{

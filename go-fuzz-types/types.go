@@ -2,7 +2,7 @@
 // Use of this source code is governed by Apache 2 LICENSE that can be found in the LICENSE file.
 
 // Package types provides types shared between go-fuzz-build and go-fuzz.
-package types
+package gofuzztypes
 
 type CoverBlock struct {
 	ID        int

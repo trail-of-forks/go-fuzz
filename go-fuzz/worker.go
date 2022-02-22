@@ -19,7 +19,7 @@ import (
 	"unsafe"
 
 	. "github.com/trailofbits/go-fuzz/go-fuzz-defs"
-	. "github.com/trailofbits/go-fuzz/internal/go-fuzz-types"
+	. "github.com/trailofbits/go-fuzz/go-fuzz-types"
 )
 
 type execType byte
