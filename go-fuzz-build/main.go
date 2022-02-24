@@ -528,7 +528,7 @@ func (c *Context) buildInstrumentedBinary(blocks *[]go_fuzz_types.CoverBlock, so
 			args = append(args, "-work")
 		}
 	}
-    if *flagGcFlags {
+    if len(*flagGcFlags) > 0 {
         args = append(args, "-gcflags=" + *flagGcFlags) // can be used for -gcflags=all=-d=checkptr=1
     }
 	if *flagRace {
