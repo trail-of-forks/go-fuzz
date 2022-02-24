@@ -33,6 +33,7 @@ var (
 	flagOut       = flag.String("o", "", "output file")
 	flagFunc      = flag.String("func", "", "preferred entry function")
 	flagWork      = flag.Bool("work", false, "don't remove working directory")
+	flagGcFlags   = flag.String("gcflags", "", "string that will be appended to -gcflags=")
 	flagRace      = flag.Bool("race", false, "enable race detector")
 	flagCPU       = flag.Bool("cpuprofile", false, "generate cpu profile in cpu.pprof")
 	flagLibFuzzer = flag.Bool("libfuzzer", false, "output static archive for use with libFuzzer")
@@ -527,6 +528,9 @@ func (c *Context) buildInstrumentedBinary(blocks *[]go_fuzz_types.CoverBlock, so
 			args = append(args, "-work")
 		}
 	}
+    if *flagGcFlags {
+        args = append(args, "-gcflags=" + *flagGcFlags) // can be used for -gcflags=all=-d=checkptr=1
+    }
 	if *flagRace {
 		args = append(args, "-race")
 	}
